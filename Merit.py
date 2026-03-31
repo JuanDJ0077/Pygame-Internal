@@ -3,6 +3,8 @@ from pygame.locals import *
 import random
 import sys
 
+#MERIT - SPACE SHOOTER
+
 pygame.init()
 
 #create the window
