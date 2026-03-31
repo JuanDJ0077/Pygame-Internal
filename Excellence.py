@@ -6,6 +6,8 @@ import sys
 
 pygame.init()
 
+#EXCELLENCE - Added a leaderboard, high score and changed the speed
+
 #create the window
 game_width = 500
 game_height = 500
@@ -95,6 +97,7 @@ class Meteor(pygame.sprite.Sprite):
 
         # base speed (before multiplier)
         self.base_speed = 2
+
         # random speed multiplier between 0.75 and 1.5 (some slower, some faster)
         self.speed_multiplier = random.uniform(0.75, 1.5)
 
@@ -240,9 +243,9 @@ while running:
 
         #move the spaceship using the left/right arrow keys
         if keys[K_LEFT] and player.rect.left > 0:
-            player.x -= 7
+            player.x -= 6
         if keys[K_RIGHT] and player.rect.right < game_width:
-            player.x += 7
+            player.x += 6
 
         #shoot missile with spacebar
         if keys[K_SPACE]:
