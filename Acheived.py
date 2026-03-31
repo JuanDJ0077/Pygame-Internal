@@ -9,6 +9,8 @@ pygame.init()
 
 #STEP 4: GAME SETUP - Over the whole game
 
+#STEP 6: ADDITIONS - Over the whole game
+
 #STEP 1: SETUP
 #create the window
 game_width = 500
