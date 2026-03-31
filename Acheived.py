@@ -7,6 +7,8 @@ pygame.init()
 
 #STEP 2: OBJECTS - Over the whole game
 
+#STEP 4: GAME SETUP - Over the whole game
+
 #STEP 1: SETUP
 #create the window
 game_width = 500
