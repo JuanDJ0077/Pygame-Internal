@@ -140,6 +140,7 @@ class Missile(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
+#STEP 3: GROUPS
 #create the sprite groups
 player_group = pygame.sprite.Group()
 meteor_group = pygame.sprite.Group()
