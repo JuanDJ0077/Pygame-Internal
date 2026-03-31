@@ -160,6 +160,7 @@ black_bg = pygame.transform.scale(black_bg, (game_width, game_height))
 player = Player(250, 450)
 player_group.add(player)
 
+#STEP 5: INPUT - missiles & left/right movement
 #missile cooldown
 missile_cooldown = 200
 last_missile = pygame.time.get_ticks()
