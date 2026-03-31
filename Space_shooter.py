@@ -1,83 +1,87 @@
+
 import pygame
 from pygame.locals import *
 import random
+import sys
 
 pygame.init()
 
 #create the window
 game_width = 500
 game_height = 500
-screen_size = (game_width, game_height)
-game_window = pygame.display.set_mode(screen_size)
+game_window = pygame.display.set_mode((game_width, game_height))
 pygame.display.set_caption("Space Shooter")
 
 #colours
-red = (255, 0, 0)
 white = (255, 255, 255)
+red = (255, 0, 0)
+
+#game states
+MENU = 0
+PLAYING = 1
+GAME_OVER = 2
+LEADERBOARD = 3
+game_state = MENU
+
+#added leaderboard + name system
+player_name = ""
+entering_name = False
+high_score = 0
+leaderboard = []
+
+#added button safety
+start_btn = None
+exit_btn = None
+leaderboard_btn = None
+restart_btn = None
+back_btn = None
 
 class Player(pygame.sprite.Sprite):
-    
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
-        
         self.lives = 3
         self.score = 0
+        
+        #for displaying damage
+        self.invincibility_frames = 0
 
         #space ship image
         image = pygame.image.load('Assets/PNG/playerShip1_blue.png')
-        image_scale = 40 / image.get_rect().width
-        new_width = image.get_rect().width * image_scale
-        new_height = image.get_rect().height * image_scale
-        scaled_size = (new_width, new_height)
-        self.image = pygame.transform.scale(image, scaled_size)
-
+        self.image = pygame.transform.scale(image, (40, 40))
         self.rect = self.image.get_rect()
 
-        #for displaying damage
-        self.invinvabiltiy_frames = 0
+        #damage image
         damage_image = pygame.image.load('Assets/PNG/Damage/playerShip1_damage1.png')
-        image_scale = 80 / damage_image.get_rect().width
-        new_width = damage_image.get_rect().width * image_scale
-        new_height = damage_image.get_rect().height * image_scale
-        scaled_size = (new_width, new_height)
-        self.damage_image = pygame.transform.scale(damage_image, scaled_size)
+        self.damage_image = pygame.transform.scale(damage_image, (80, 80))
 
     def update(self):
         self.rect.x = self.x
         self.rect.y = self.y
+        if self.invincibility_frames > 0:
+            self.invincibility_frames -= 1
 
-        if self.invinvabiltiy_frames > 0:
-            self.invinvabiltiy_frames -= 1
-    
     def draw_image(self):
-
-        if self.invinvabiltiy_frames > 0:
-
+        if self.invincibility_frames > 0:
             damage_x = self.x - self.damage_image.get_width() / 3
             damage_y = self.y - self.damage_image.get_height() / 3
             game_window.blit(self.damage_image, (damage_x, damage_y))
 
 class Meteor(pygame.sprite.Sprite):
-    
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.x = x
-        self.y = y
 
         #select a random color, size, and number for the image
-        color = random.choice(['brown', 'grey'])
-        size = random.choice(['big', 'medium', 'small', 'tiny'])
-        num = random.randint(1, 2)
-        self.image = pygame.image.load(f'Assets/PNG/Meteors/meteor{color}_{size}_{num}.png')
-
+        color = random.choice(['Brown', 'Grey'])
+        size = random.choice(['big', 'med', 'small', 'tiny'])
+        num = 1
+        self.image = pygame.image.load(f'Assets/PNG/Meteors/meteor{color}_{size}{num}.png')
         #set number of hits required to destroy the meteor
-        #and the points added to score if destroyed
         if size == 'big':
             self.hits = 4
             self.points = 4
-        elif size == 'medium':
+        elif size == 'med':
             self.hits = 3
             self.points = 3
         elif size == 'small':
@@ -86,34 +90,30 @@ class Meteor(pygame.sprite.Sprite):
         elif size == 'tiny':
             self.hits = 1
             self.points = 1
-
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
 
+        # base speed (before multiplier)
+        self.base_speed = 2
+        # random speed multiplier between 0.75 and 1.5 (some slower, some faster)
+        self.speed_multiplier = random.uniform(0.75, 1.5)
+
     def update(self):
-
-        #move meteor down 
-        self.rect.y += 1
-
-        #rotate the image
-        if self.rect.y % 20 == 0:
-            self.image = pygame.transform.rotate(self.image, 90)
+        # base speed increases every 20 points
+        speed_increase = player.score // 20
+        # final speed is base speed plus increase times multiplier
+        self.speed = (self.base_speed + speed_increase) * self.speed_multiplier
+        self.rect.y += self.speed
 
         #check for collision with player
         if pygame.sprite.collide_rect(self, player):
-
-           #decrease player live unless player just recently got hit
-            if player.invinvabiltiy_frames == 0:
+            if player.invincibility_frames == 0:
                 player.lives -= 1
-
-                #display the damage image for 50 frames
-                player.invinvabiltiy_frames = 50
+                player.invincibility_frames = 50
 
         #check for collision with missiles
         if pygame.sprite.spritecollide(self, missile_group, True):
             self.hits -= 1
-
-            #add score if meteor is destroyed
             if self.hits == 0:
                 player.score += self.points
 
@@ -121,40 +121,22 @@ class Meteor(pygame.sprite.Sprite):
         if self.rect.top > game_height or self.hits == 0:
             self.kill()
 
-
 class Missile(pygame.sprite.Sprite):
-    
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.rect = Rect(x - 2, y, 4, 8)
-        
-    def draw_image(self):
-        for w in range(self.rect.width):
-            for h in range(self.rect.height):
-                game_window.set_at((self.rect.x + w, self.rect.y - h), white)
+
+        #missile image
+        image = pygame.image.load('Assets/PNG/Lasers/laserBlue01.png')
+        self.image = pygame.transform.scale(image, (10, 20))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
 
     def update(self):
 
         #missile shoots up the screen
-        self.rect.y -= 5
-
-        #display the missile or remove or remove if it goes off the screen
-        if self.rect.bottom > 0:
-            self.draw_image()
-        else: 
+        self.rect.y -= 6
+        if self.rect.bottom < 0:
             self.kill()
-
-        #missile image
-        image = pygame.image.load('Assets/PNG/Lasers/laserBlue01.png')
-        image_scale = 20 / image.get_rect().width
-        new_width = image.get_rect().width * image_scale
-        new_height = image.get_rect().height * image_scale
-        scaled_size = (new_width, new_height)
-        self.image = pygame.transform.scale(image, scaled_size)
-
-        self.rect = self.image.get_rect()
-
-
 
 #create the sprite groups
 player_group = pygame.sprite.Group()
@@ -162,68 +144,171 @@ meteor_group = pygame.sprite.Group()
 missile_group = pygame.sprite.Group()
 
 #load background image
-bg = pygame.image.load('Assets/backgrounds/blue.png')
+bg = pygame.image.load('Assets/Bonus/Backggournd.png')
+bg = pygame.transform.scale(bg, (game_width, game_height))
 
-#create the player  
-player_x =250
-player_y = 450
-player = Player(player_x, player_y) 
+#load gameplay background image
+black_bg = pygame.image.load('Assets/Backgrounds/black.png')
+black_bg = pygame.transform.scale(black_bg, (game_width, game_height))
+
+#create the player
+player = Player(250, 450)
 player_group.add(player)
 
 #missile cooldown
-missle_cooldown = 200
-last_missile = pygame.time.get_ticks() - missle_cooldown
+missile_cooldown = 200
+last_missile = pygame.time.get_ticks()
+
+#helper function to display text on the screen (white with black outline)
+def write_text(text, size, x, y):
+    font = pygame.font.Font(None, size)
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(x, y))
+    #draw outline
+    for ox, oy in [(-2,0),(2,0),(0,-2),(0,2),(-2,-2),(2,2),(-2,2),(2,-2)]:
+        outline = font.render(text, True, (0, 0, 0))
+        game_window.blit(outline, (text_rect.x + ox, text_rect.y + oy))
+    #draw main text
+    game_window.blit(text_surface, text_rect)
+    return text_rect
+
+#create a new meteor
+def create_meteor():
+    meteor_x = random.randint(0, game_width)
+    meteor_group.add(Meteor(meteor_x, 0))
+
+#game loop setup
+clock = pygame.time.Clock()
+loop_ctr = 0
+running = True
 
 #game loop
-clock = pygame.time.Clock()
-fps = 60
-running = True
-loop_ctr = 0
 while running:
-
-    loop_ctr += 1
-
-    clock.tick(fps)
-
+    clock.tick(60) / 1000
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
+        if event.type == MOUSEBUTTONDOWN:
+            mx, my = pygame.mouse.get_pos()
+            if game_state == MENU:
+                if start_btn and start_btn.collidepoint((mx, my)):
+                    player_group.empty()
+                    meteor_group.empty()
+                    missile_group.empty()
+                    player = Player(250, 450)
+                    player_group.add(player)
+                    loop_ctr = 0
+                    game_state = PLAYING
+                if leaderboard_btn and leaderboard_btn.collidepoint((mx, my)):
+                    game_state = LEADERBOARD
+                if exit_btn and exit_btn.collidepoint((mx, my)):
+                    running = False
+            if game_state == GAME_OVER:
+                if restart_btn and restart_btn.collidepoint((mx, my)):
+                    entering_name = True
+            if game_state == LEADERBOARD:
+                if back_btn and back_btn.collidepoint((mx, my)):
+                    game_state = MENU
+        if event.type == KEYDOWN and entering_name:
+            if event.key == K_RETURN:
+                entering_name = False
+                leaderboard.append((player_name, player.score))
+                leaderboard.sort(key=lambda x: x[1], reverse=True)
+                leaderboard = leaderboard[:5]
+                if player.score > high_score:
+                    high_score = player.score
+                player_name = ""
+                game_state = MENU
+            elif event.key == K_BACKSPACE:
+                player_name = player_name[:-1]
+            else:
+                player_name += event.unicode
 
-    keys = pygame.key.get_pressed()
+    #menu screen
+    if game_state == MENU:
+        game_window.blit(bg, (0, 0))
+        write_text("SPACE SHOOTER", 80, 250, 150)
+        start_btn = write_text("START", 50, 250, 230)
+        leaderboard_btn = write_text("LEADERBOARD", 50, 250, 300)
+        exit_btn = write_text("EXIT", 50, 250, 370)
 
-    #move the spaceship using the left/right arrow keys
-    if keys[K_LEFT] and player.rect.left > 0:
-        player.x -= 2
-    elif keys[K_RIGHT] and player.rect.right < game_width:
-        player.x += 2
+    #playing screen
+    elif game_state == PLAYING:
+        game_window.blit(black_bg, (0, 0))
+        loop_ctr += 1
+        keys = pygame.key.get_pressed()
 
-    #shoot missile with spacebar
-    if keys[K_SPACE]:
+        #move the spaceship using the left/right arrow keys
+        if keys[K_LEFT] and player.rect.left > 0:
+            player.x -= 7
+        if keys[K_RIGHT] and player.rect.right < game_width:
+            player.x += 7
 
-        #wait for some time before shooting another missile
-        current_time = pygame.time.get_ticks()
-        if current_time - last_missile >= missle_cooldown:
+        #shoot missile with spacebar
+        if keys[K_SPACE]:
+            current_time = pygame.time.get_ticks()
+            if current_time - last_missile > missile_cooldown:
+                missile = Missile(player.rect.centerx, player.rect.top)
+                missile_group.add(missile)
+                last_missile = current_time
 
-            missile = Missile(player.rect.centerx, player.rect.top)
-            missile_group.add(missile)
+        #move and draw the player's spaceship
+        player.update()
+        player_group.draw(game_window)
 
-            last_missile = current_time
+        #draw damage if player is hit
+        player.draw_image()
 
-    # draw the background
-    for bg_x in range(0, game_width, bg.get_width()):
-        for bg_y in range(0, game_height, bg.get_height()):
-            game_window.blit(bg, (bg_x, bg_y))
+        #move and draw the missiles
+        missile_group.update()
+        missile_group.draw(game_window)
 
-    #move and draw the player's spaceship   
-    player.update()
-    player_group.draw(game_window)
+        #create meteors
+        if loop_ctr == 100:
+            create_meteor()
+            loop_ctr = 0
 
-    #draw damage if plater is hit
-    player.draw_image() 
+        #move and draw meteors
+        meteor_group.update()
+        meteor_group.draw(game_window)
 
-    #move and draw the missiles
-    missile_group.update()
+        #display score and lives
+        write_text(f'Score: {player.score}', 30, game_width / 8, 20)
+        write_text(f'Lives: {player.lives}', 30, game_width * 7 / 8, 20)
+
+        #check game over
+        if player.lives <= 0:
+            meteor_group.empty()
+            missile_group.empty()
+            game_state = GAME_OVER
+
+    #game over screen
+    elif game_state == GAME_OVER:
+        game_window.fill((0, 0, 0))
+        write_text("GAME OVER", 70, 250, 150)
+        write_text(f"Score: {player.score}", 40, 250, 220)
+        write_text(f"High Score: {high_score}", 40, 250, 260)
+        if entering_name:
+            write_text("Enter Name:", 40, 250, 320)
+            write_text(player_name, 40, 250, 360)
+            write_text("Press ENTER to save", 25, 250, 400)
+        else:
+            restart_btn = write_text("SAVE SCORE", 50, 250, 320)
+
+    #leaderboard screen
+    elif game_state == LEADERBOARD:
+        game_window.fill((0, 0, 0))
+        write_text("LEADERBOARD", 60, 250, 100)
+        y_offset = 180
+        if len(leaderboard) == 0:
+            write_text("No scores yet", 40, 250, 200)
+        else:
+            for i, (name, score) in enumerate(leaderboard):
+                write_text(f"{i+1}. {name} - {score}", 35, 250, y_offset)
+                y_offset += 40
+        back_btn = write_text("BACK", 40, 250, 420)
 
     pygame.display.update()
 
 pygame.quit()
+sys.exit() 
