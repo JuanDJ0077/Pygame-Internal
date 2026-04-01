@@ -1,10 +1,11 @@
-
 import pygame
 from pygame.locals import *
 import random
 import sys
 
 pygame.init()
+
+#EXCELLENCE - SPACE SHOOTER
 
 #create the window
 game_width = 500
@@ -21,6 +22,7 @@ MENU = 0
 PLAYING = 1
 GAME_OVER = 2
 LEADERBOARD = 3
+WRONG_KEY = 4
 game_state = MENU
 
 #added leaderboard + name system
@@ -28,6 +30,7 @@ player_name = ""
 entering_name = False
 high_score = 0
 leaderboard = []
+wrong_key_pressed = ""
 
 #added button safety
 start_btn = None
@@ -188,6 +191,8 @@ while running:
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
+
+        #mouse click handling
         if event.type == MOUSEBUTTONDOWN:
             mx, my = pygame.mouse.get_pos()
             if game_state == MENU:
@@ -209,6 +214,8 @@ while running:
             if game_state == LEADERBOARD:
                 if back_btn and back_btn.collidepoint((mx, my)):
                     game_state = MENU
+
+        #entering name for leaderboard
         if event.type == KEYDOWN and entering_name:
             if event.key == K_RETURN:
                 entering_name = False
@@ -224,6 +231,17 @@ while running:
             else:
                 player_name += event.unicode
 
+        #gameplay key handling + wrong key detection
+        if event.type == KEYDOWN and game_state == PLAYING and not entering_name:
+            if event.key not in [K_LEFT, K_RIGHT, K_SPACE]:
+                wrong_key_pressed = pygame.key.name(event.key)
+                game_state = WRONG_KEY
+
+        #continue from wrong key screen
+        if event.type == KEYDOWN and game_state == WRONG_KEY:
+            if event.key == K_SPACE:
+                game_state = PLAYING
+
     #menu screen
     if game_state == MENU:
         game_window.blit(bg, (0, 0))
@@ -231,6 +249,7 @@ while running:
         start_btn = write_text("START", 50, 250, 230)
         leaderboard_btn = write_text("LEADERBOARD", 50, 250, 300)
         exit_btn = write_text("EXIT", 50, 250, 370)
+        write_text("Use only arrow keys & SPACE", 20, 250, 420)
 
     #playing screen
     elif game_state == PLAYING:
@@ -282,6 +301,14 @@ while running:
             missile_group.empty()
             game_state = GAME_OVER
 
+    #wrong key pressed screen
+    elif game_state == WRONG_KEY:
+        game_window.fill((150, 0, 0))
+        write_text("WRONG KEY!", 60, 250, 180)
+        write_text("Only use arrow keys and space", 30, 250, 240)
+        write_text(f"You pressed: {wrong_key_pressed}", 25, 250, 300)
+        write_text("Press SPACE to continue", 25, 250, 360)
+
     #game over screen
     elif game_state == GAME_OVER:
         game_window.fill((0, 0, 0))
@@ -311,4 +338,4 @@ while running:
     pygame.display.update()
 
 pygame.quit()
-sys.exit() 
+sys.exit()
