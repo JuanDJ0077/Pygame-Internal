@@ -5,6 +5,8 @@ import sys
 
 pygame.init()
 
+#MERIT: Adding a menu screen
+
 #create the window
 game_width = 500
 game_height = 500
