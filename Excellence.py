@@ -9,7 +9,7 @@ pygame.init()
 
 #EXCELLENCE - SPACE SHOOTER
 
-#EXCELLENCE - WRONG KEY INPUT - Errors
+#EXCELLENCE - WRONG KEY INPUT - Errors - Correction
 
 #create the window
 game_width = 500
@@ -38,19 +38,25 @@ wrong_key_pressed = ""
 
 SAVE_FILE = "leaderboard.json"
 
+# ✅ SAFE LOAD (prevents crash if file is broken)
 if os.path.exists(SAVE_FILE):
-    with open(SAVE_FILE, "r") as f:
-        data = json.load(f)
-        leaderboard = data.get("leaderboard", [])
-        high_score = data.get("high_score", 0)
+    try:
+        with open(SAVE_FILE, "r") as f:
+            data = json.load(f)
+            leaderboard = data.get("leaderboard", [])
+            high_score = data.get("high_score", 0)
+    except:
+        leaderboard = []
+        high_score = 0
 
+# ✅ CLEAN SAVE
 def save_data():
     data = {
         "leaderboard": leaderboard,
         "high_score": high_score
     }
     with open(SAVE_FILE, "w") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
 #added button safety
 start_btn = None
@@ -70,12 +76,10 @@ class Player(pygame.sprite.Sprite):
         #for displaying damage
         self.invincibility_frames = 0
 
-        #space ship image
         image = pygame.image.load('Assets/PNG/playerShip1_blue.png')
         self.image = pygame.transform.scale(image, (40, 40))
         self.rect = self.image.get_rect()
 
-        #damage image
         damage_image = pygame.image.load('Assets/PNG/Damage/playerShip1_damage1.png')
         self.damage_image = pygame.transform.scale(damage_image, (80, 80))
 
@@ -189,7 +193,7 @@ while running:
     clock.tick(60) / 1000
     for event in pygame.event.get():
         if event.type == QUIT:
-            save_data()  
+            save_data()
             running = False
 
         if event.type == MOUSEBUTTONDOWN:
@@ -206,7 +210,7 @@ while running:
                 if leaderboard_btn and leaderboard_btn.collidepoint((mx, my)):
                     game_state = LEADERBOARD
                 if exit_btn and exit_btn.collidepoint((mx, my)):
-                    save_data() 
+                    save_data()
                     running = False
             if game_state == GAME_OVER:
                 if restart_btn and restart_btn.collidepoint((mx, my)):
@@ -218,13 +222,13 @@ while running:
         if event.type == KEYDOWN and entering_name:
             if event.key == K_RETURN:
                 entering_name = False
-                leaderboard.append([player_name, player.score])  
+                leaderboard.append([player_name, player.score])
                 leaderboard.sort(key=lambda x: x[1], reverse=True)
                 leaderboard = leaderboard[:5]
                 if player.score > high_score:
                     high_score = player.score
 
-                save_data() 
+                save_data()
 
                 player_name = ""
                 game_state = MENU
