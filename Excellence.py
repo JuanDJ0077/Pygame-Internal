@@ -322,6 +322,8 @@ while running:
         else:
             restart_btn = write_text("SAVE SCORE", 50, 250, 320)
 
+#LEADDERBOARD SYSTEM + NAME ENTRY
+
     #leaderboard screen
     elif game_state == LEADERBOARD:
         game_window.fill((0, 0, 0))
