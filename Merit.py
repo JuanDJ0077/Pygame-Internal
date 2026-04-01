@@ -273,6 +273,8 @@ while running:
                 high_score = player.score
             game_state = GAME_OVER
 
+#ADDED A HIGH SCORE SYSTEM
+
     #game over screen
     elif game_state == GAME_OVER:
         game_window.fill((0, 0, 0))
