@@ -139,6 +139,8 @@ class Missile(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
+#ADDING A MENU SCREEN
+
 #create the sprite groups
 player_group = pygame.sprite.Group()
 meteor_group = pygame.sprite.Group()
