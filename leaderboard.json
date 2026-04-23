@@ -1,9 +1,17 @@
 {
     "leaderboard": [
         [
-            "juan",
-            10
+            "Janco",
+            169
+        ],
+        [
+            "Juan",
+            141
+        ],
+        [
+            "Juan",
+            22
         ]
     ],
-    "high_score": 10
+    "high_score": 169
 }

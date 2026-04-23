@@ -45,3 +45,18 @@ If the project later needs a package such as requests, you would install it like
 ```
 pip install pygame-ce
 ```
+
+# To run my game
+
+## Acheived version
+```
+python ./Acheived.py
+```
+## Merit version
+```
+python ./Merit.py
+```
+## Excellence version
+```
+python ./Excellence.py
+```
